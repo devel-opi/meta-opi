@@ -1,0 +1,12 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=/usr/lib
+includedir=/usr/include
+
+Name: wayland-egl
+Description: Mali wayland EGL library
+Requires.private:
+Version: r6p2
+Libs: -L${libdir} -lwayland-egl
+Libs.private: -lm -lpthread -ldl
+Cflags: -I${includedir}

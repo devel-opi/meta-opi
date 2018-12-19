@@ -1,0 +1,12 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=/usr/lib
+includedir=/usr/include
+
+Name: gbm
+Description: Mali GBM library
+Requires.private:
+Version: r6p2
+Libs: -L${libdir} -lgbm
+Libs.private: -lm -lpthread -ldl
+Cflags: -I${includedir}
