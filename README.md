@@ -27,3 +27,6 @@ Heatsink and fan should be install before run glmark or any other power intensiv
     # Start build (can take a couple of hours)
     bitbake core-image-minimal
     
+After successful build, you can find image for SD-Card at **build_dir/build/tmp-glibc/deploy/images/orange-pi-one**
+
+You can write it into SD-Card using **dd** utility
