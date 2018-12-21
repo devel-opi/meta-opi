@@ -13,10 +13,12 @@ Heatsink and fan should be install before run glmark or any other power intensiv
     mkdir build_dir && cd build_dir
     git clone git@github.com:devel-opi/meta-opi.git
     git clone git://git.openembedded.org/openembedded-core oe-core
-    (cd oe-core && git clone git://git.openembedded.org/bitbake)
+    cd oe-core 
+    git clone git://git.openembedded.org/bitbake
     git clone git@github.com:openembedded/meta-openembedded.git
     
     # Create/Activate bitbake environment
+    cd ../
     source oe-core/oe-init-build-env
     # After that you should be moved into newly created "./build" folder
     
