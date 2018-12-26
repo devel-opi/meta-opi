@@ -16,18 +16,18 @@ $ sudo apt-get install gawk wget git-core diffstat unzip texinfo gcc-multilib bu
 ### Expected directory structure
 - build_dir
     - meta-opi
-    - openembedded-core
-    - bitbake
+    - oe-core
+    - oe-core/bitbake
     - meta-openembedded
 
 ### How to build
 * Clone repositories first
 ```
     mkdir build_dir && cd build_dir
-    git clone git@github.com:devel-opi/meta-opi.git
+    git clone git://github.com/devel-opi/meta-opi.git
     git clone git://git.openembedded.org/openembedded-core oe-core
     git clone git://git.openembedded.org/bitbake oe-core/bitbake
-    git clone git@github.com:openembedded/meta-openembedded.git
+    git clone git://git.openembedded.org/meta-openembedded
 ```
 * Create/Activate bitbake environment
 ```
