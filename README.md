@@ -23,26 +23,26 @@ $ sudo apt-get install gawk wget git-core diffstat unzip texinfo gcc-multilib bu
 ### How to build
 * Clone repositories first
 ```
-    mkdir build_dir && cd build_dir
-    git clone git://github.com/devel-opi/meta-opi.git
-    git clone git://git.openembedded.org/openembedded-core oe-core
-    git clone git://git.openembedded.org/bitbake oe-core/bitbake
-    git clone git://git.openembedded.org/meta-openembedded
+mkdir build_dir && cd build_dir
+git clone git://github.com/devel-opi/meta-opi.git
+git clone git://git.openembedded.org/openembedded-core oe-core
+git clone git://git.openembedded.org/bitbake oe-core/bitbake
+git clone git://git.openembedded.org/meta-openembedded
 ```
 * Create/Activate bitbake environment
 ```
-    source oe-core/oe-init-build-env
+source oe-core/oe-init-build-env
 ```
 After that you should be moved into newly created "./build" folder
     
 * Configure build
 ```
-    cat ../meta-opi/bblayers.frag >> ./conf/bblayers.conf
-    cat ../meta-opi/conf.frag >> ./conf/local.conf
+cat ../meta-opi/bblayers.frag >> ./conf/bblayers.conf
+cat ../meta-opi/conf.frag >> ./conf/local.conf
 ```
 * Start build (can take a couple of hours)
 ```
-    bitbake core-image-minimal
+bitbake core-image-minimal
 ```
     
 After successful build, you can find image for SD-Card at **build_dir/build/tmp-glibc/deploy/images/orange-pi-one**
