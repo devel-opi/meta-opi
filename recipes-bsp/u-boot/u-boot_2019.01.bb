@@ -26,7 +26,7 @@ SRC_URI = " \
   file://0001-sunxi-h3-Fix-PLL1-setup-to-never-use-dividers.patch \
 "
 
-SRCREV = "1f2e948d6d53f77a2ddb2dde3531b0d5bc2815ad"
+SRCREV = "d3689267f92c5956e09cc7d1baa4700141662bff"
 
 PV = "git${SRCPV}"
 
