@@ -19,12 +19,12 @@ KERNEL_EXTRA_ARGS += "LOADADDR=${UBOOT_ENTRYPOINT}"
 
 S = "${WORKDIR}/linux-${PV}"
 	
-SRC_URI[md5sum] = "2ea08d2983ce6dee980ecebc5baf2c0d"
+SRC_URI[md5sum] = "d39dd4ba2d5861c54b90d49be19eaf31"
 
-SRC_URI = "https://git.kernel.org/torvalds/t/linux-${PV}.tar.gz \
-        file://0003-ARM-dts-nanopi-neo-air-Add-WiFi-eMMC.patch \
+SRC_URI = "https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-${PV}.tar.xz \
+	file://0003-ARM-dts-nanopi-neo-air-Add-WiFi-eMMC.patch \
 	file://0001-Squashed-sunxi-VPU-driver-from-bootlin-github-reposi.patch \
-        file://defconfig \
+	file://defconfig \
         "
 
 #KBUILD_DEFCONFIG_orange-pi-one = "sunxi_defconfig"

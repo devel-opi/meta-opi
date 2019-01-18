@@ -1,239 +1,181 @@
-From 21541b509750628749190fc9a879fbfcef3b2020 Mon Sep 17 00:00:00 2001
-From: Roman Stratiienko <roman.stratiienko@globallogic.com>
-Date: Mon, 10 Dec 2018 12:55:08 +0200
-Subject: [PATCH] Squashed commit of the following:
+From 7e23afc8ecdf142607d9f349c9212c06f06eaf2c Mon Sep 17 00:00:00 2001
+From: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
+Date: Fri, 2 Nov 2018 06:36:32 -0400
+Subject: [PATCH] This is a combination of 15 commits. This is the 1st commit
+ message:
 
-commit 0ae27dc6d65f74c24a9964898dd391fd3510f9ee
-Author: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
-Date:   Tue Aug 28 09:50:31 2018 +0200
+v4l2-controls: add a missing include
 
-    media: cedrus: Add HEVC/H.265 decoding support
+As warned by "make headers_check", the definition for the linux-specific
+integer types is missing:
 
-    This introduces support for HEVC/H.265 to the Cedrus VPU driver, with
-    both uni-directional and bi-directional prediction modes supported.
+	./usr/include/linux/v4l2-controls.h:1105: found __[us]{8,16,32,64} type without #include <linux/types.h>
 
-    Field-coded (interlaced) pictures, custom quantization matrices and
-    10-bit output are not supported at this point.
+Fixes: c27bb30e7b6d ("media: v4l: Add definitions for MPEG-2 slice format and metadata")
+Reported-by: Linus Torvalds <torvalds@linux-foundation.org>
+Reported-by: Stephen Rothwell <sfr@canb.auug.org.au>
+Signed-off-by: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
 
-    Signed-off-by: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
+mem2mem: Require capture and output mutexes to match
 
-commit 6447ace237929c96fa61c98e7529d2d96b669996
-Author: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
-Date:   Mon Aug 27 13:55:13 2018 +0200
+Currently, all the mem2mem driver either use a single mutex
+to lock the capture and output videobuf2 queues, or don't
+set any mutex.
 
-    media: v4l: Add definitions for the HEVC slice format and controls
+This means the mutexes match, and so the mem2mem framework
+is able to set the m2m context lock.
 
-    This introduces the required definitions for HEVC decoding support with
-    stateless VPUs. The controls associated to the HEVC slice format provide
-    the required meta-data for decoding slices extracted from the bitstream.
+Enforce this by making it mandatory for drivers to set
+the same capture and output mutex, or not set any mutex at all.
 
-    This interface comes with the following limitations:
-    * No custom quantization matrices (scaling lists);
-    * Support for a single temporal layer only;
-    * No slice entry point offsets support;
-    * No conformance window support;
-    * No VUI parameters support;
-    * No support for SPS extensions: range, multilayer, 3d, scc, 4 bits;
-    * No support for PPS extensions: range, multilayer, 3d, scc, 4 bits.
+Signed-off-by: Ezequiel Garcia <ezequiel@collabora.com>
 
-    Signed-off-by: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
+v4l2-ioctl.c: Simplify locking for m2m devices
 
-commit 0899c740c3557bd6a74c9bbbfd21fecc73568bb5
-Author: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
-Date:   Tue Aug 28 09:19:08 2018 +0200
+Now that the mutexes for output and capture vb2 queues match,
+it is possible to refer to the context q_lock as the
+m2m lock for a given m2m context.
 
-    media: cedrus: h264: Harmonize header
+Remove the output/capture lock selection.
 
-    Signed-off-by: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
+Signed-off-by: Ezequiel Garcia <ezequiel@collabora.com>
 
-commit 5973fb294b6c66465cb8c34cd13f90b48a5388d4
-Author: Maxime Ripard <maxime.ripard@bootlin.com>
-Date:   Tue Jun 12 15:23:39 2018 +0200
+v4l2-mem2mem: Simplify exiting the function in __v4l2_m2m_try_schedule
 
-    media: cedrus: Add H264 prediction weight table support
+The __v4l2_m2m_try_schedule function acquires and releases multiple
+spinlocks. Simplify unlocking the job lock by adding labels to unlock
+the lock and exit the function.
 
-    Signed-off-by: Maxime Ripard <maxime.ripard@bootlin.com>
+Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
+Signed-off-by: Ezequiel Garcia <ezequiel@collabora.com>
 
-commit 43beb62771cbf46f03ac0fa6637d1b249910baab
-Author: Maxime Ripard <maxime.ripard@bootlin.com>
-Date:   Mon Jul 9 16:23:44 2018 +0200
+v4l2-mem2mem: Avoid calling .device_run in v4l2_m2m_job_finish
 
-    media: cedrus: Add scaling matrix support
+v4l2_m2m_job_finish() is typically called when
+DMA operations complete, in interrupt handlers or DMA
+completion callbacks. Calling .device_run from v4l2_m2m_job_finish
+creates a nasty re-entrancy path into the driver.
 
-    Signed-off-by: Maxime Ripard <maxime.ripard@bootlin.com>
+Moreover, some implementation of .device_run might need to sleep,
+as is the case for drivers supporting the Request API,
+where controls are applied via v4l2_ctrl_request_setup,
+which takes the ctrl handler mutex.
 
-commit 349856d0ee1632dfa8e972784322a151fc87d404
-Author: Maxime Ripard <maxime.ripard@bootlin.com>
-Date:   Mon Jul 9 11:58:01 2018 +0200
+This commit adds a deferred context that calls v4l2_m2m_try_run,
+and gets scheduled by v4l2_m2m_job_finish().
 
-    media: cedrus: Add H264 decoding support
+Before this change, device_run would be called from these
+paths:
 
-    Introduce some basic H264 decoding support in cedrus. So far, only the
-    baseline profile videos have been tested, and some more advanced features
-    used in higher profiles are not even implemented.
+vb2_m2m_request_queue, or
+v4l2_m2m_streamon, or
+v4l2_m2m_qbuf
+  v4l2_m2m_try_schedule
+    v4l2_m2m_try_run
+      .device_run
 
-    Signed-off-by: Maxime Ripard <maxime.ripard@bootlin.com>
+v4l2_m2m_job_finish
+  v4l2_m2m_try_run
+    .device_run
 
-commit 59de85913a949dbe896b7f5d3c71cb213dd18c7f
-Author: Pawel Osciak <posciak@chromium.org>
-Date:   Sat Sep 13 15:04:47 2014 +0900
+After this change, the latter is now gone and instead:
 
-    CHROMIUM: v4l: Add H264 low-level decoder API compound controls.
+v4l2_m2m_device_run_work
+  v4l2_m2m_try_run
+    .device_run
 
-    Signed-off-by: Pawel Osciak <posciak@chromium.org>
-    Reviewed-by: Wu-cheng Li <wuchengli@chromium.org>
-    Tested-by: Tomasz Figa <tfiga@chromium.org>
-    Signed-off-by: Guenter Roeck <groeck@chromium.org>
-    Signed-off-by: Maxime Ripard <maxime.ripard@bootlin.com>
+Signed-off-by: Ezequiel Garcia <ezequiel@collabora.com>
 
-commit 80340d9405a4027c4f54bcde2316b278d508f93f
-Author: kbuild test robot <fengguang.wu@intel.com>
-Date:   Tue Nov 6 19:33:19 2018 +0800
+media: cedrus: Get rid of interrupt bottom-half
 
-    media: platform: fix platform_no_drv_owner.cocci warnings
+Now that the mem2mem framework guarantees that .device_run
+won't be called from interrupt context, it is safe to call
+v4l2_m2m_job_finish directly in the top-half.
 
-    drivers/staging/media/sunxi/cedrus/cedrus.c:421:3-8: No need to set .owner here. The core will do it.
+So this means the bottom-half is no longer needed and we
+can get rid of it.
 
-     Remove .owner field if calls are used which set it automatically
+Signed-off-by: Ezequiel Garcia <ezequiel@collabora.com>
 
-    Generated by: scripts/coccinelle/api/platform_no_drv_owner.cocci
+cedrus: check if kzalloc() fails
 
-    Fixes: 50e761516f2b ("media: platform: Add Cedrus VPU decoder driver")
-    CC: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
-    Signed-off-by: kbuild test robot <fengguang.wu@intel.com>
-    Acked-by: Maxime Ripard <maxime.ripard@bootlin.com>
+As warned by static code analizer checkers:
+	drivers/staging/media/sunxi/cedrus/cedrus.c: drivers/staging/media/sunxi/cedrus/cedrus.c:93 cedrus_init_ctrls() error: potential null dereference 'ctx->ctrls'.  (kzalloc returns null)
 
-commit 0e152509c2aa6f7a8eea54a59c9d46430e8ed473
-Author: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
-Date:   Tue Nov 6 06:21:29 2018 -0500
+The problem is that it assumes that kzalloc() will always
+succeed.
 
-    cedrus: check if kzalloc() fails
+Signed-off-by: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
+Acked-by: Maxime Ripard <maxime.ripard@bootlin.com>
 
-    As warned by static code analizer checkers:
-    	drivers/staging/media/sunxi/cedrus/cedrus.c: drivers/staging/media/sunxi/cedrus/cedrus.c:93 cedrus_init_ctrls() error: potential null dereference 'ctx->ctrls'.  (kzalloc returns null)
+media: platform: fix platform_no_drv_owner.cocci warnings
 
-    The problem is that it assumes that kzalloc() will always
-    succeed.
+drivers/staging/media/sunxi/cedrus/cedrus.c:421:3-8: No need to set .owner here. The core will do it.
 
-    Signed-off-by: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
-    Acked-by: Maxime Ripard <maxime.ripard@bootlin.com>
+ Remove .owner field if calls are used which set it automatically
 
-commit debae7271169b09f11d8f332273e06e6c8aa5e76
-Author: Ezequiel Garcia <ezequiel@collabora.com>
-Date:   Thu Oct 18 15:02:24 2018 -0300
+Generated by: scripts/coccinelle/api/platform_no_drv_owner.cocci
 
-    media: cedrus: Get rid of interrupt bottom-half
+Fixes: 50e761516f2b ("media: platform: Add Cedrus VPU decoder driver")
+CC: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
+Signed-off-by: kbuild test robot <fengguang.wu@intel.com>
+Acked-by: Maxime Ripard <maxime.ripard@bootlin.com>
 
-    Now that the mem2mem framework guarantees that .device_run
-    won't be called from interrupt context, it is safe to call
-    v4l2_m2m_job_finish directly in the top-half.
+CHROMIUM: v4l: Add H264 low-level decoder API compound controls.
 
-    So this means the bottom-half is no longer needed and we
-    can get rid of it.
+Signed-off-by: Pawel Osciak <posciak@chromium.org>
+Reviewed-by: Wu-cheng Li <wuchengli@chromium.org>
+Tested-by: Tomasz Figa <tfiga@chromium.org>
+Signed-off-by: Guenter Roeck <groeck@chromium.org>
+Signed-off-by: Maxime Ripard <maxime.ripard@bootlin.com>
+[Conflicts resolved]
 
-    Signed-off-by: Ezequiel Garcia <ezequiel@collabora.com>
+media: cedrus: Add H264 decoding support
 
-commit 02628f1b7329cac13197e386c25a2072e1bda875
-Author: Ezequiel Garcia <ezequiel@collabora.com>
-Date:   Thu Oct 18 15:02:23 2018 -0300
+Introduce some basic H264 decoding support in cedrus. So far, only the
+baseline profile videos have been tested, and some more advanced features
+used in higher profiles are not even implemented.
 
-    v4l2-mem2mem: Avoid calling .device_run in v4l2_m2m_job_finish
+Signed-off-by: Maxime Ripard <maxime.ripard@bootlin.com>
 
-    v4l2_m2m_job_finish() is typically called when
-    DMA operations complete, in interrupt handlers or DMA
-    completion callbacks. Calling .device_run from v4l2_m2m_job_finish
-    creates a nasty re-entrancy path into the driver.
+media: cedrus: Add scaling matrix support
 
-    Moreover, some implementation of .device_run might need to sleep,
-    as is the case for drivers supporting the Request API,
-    where controls are applied via v4l2_ctrl_request_setup,
-    which takes the ctrl handler mutex.
+Signed-off-by: Maxime Ripard <maxime.ripard@bootlin.com>
 
-    This commit adds a deferred context that calls v4l2_m2m_try_run,
-    and gets scheduled by v4l2_m2m_job_finish().
+media: cedrus: Add H264 prediction weight table support
 
-    Before this change, device_run would be called from these
-    paths:
+Signed-off-by: Maxime Ripard <maxime.ripard@bootlin.com>
 
-    vb2_m2m_request_queue, or
-    v4l2_m2m_streamon, or
-    v4l2_m2m_qbuf
-      v4l2_m2m_try_schedule
-        v4l2_m2m_try_run
-          .device_run
+media: cedrus: h264: Harmonize header
 
-    v4l2_m2m_job_finish
-      v4l2_m2m_try_run
-        .device_run
+Signed-off-by: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
 
-    After this change, the latter is now gone and instead:
+media: v4l: Add definitions for the HEVC slice format and controls
 
-    v4l2_m2m_device_run_work
-      v4l2_m2m_try_run
-        .device_run
+This introduces the required definitions for HEVC decoding support with
+stateless VPUs. The controls associated to the HEVC slice format provide
+the required meta-data for decoding slices extracted from the bitstream.
 
-    Signed-off-by: Ezequiel Garcia <ezequiel@collabora.com>
+This interface comes with the following limitations:
+* No custom quantization matrices (scaling lists);
+* Support for a single temporal layer only;
+* No slice entry point offsets support;
+* No conformance window support;
+* No VUI parameters support;
+* No support for SPS extensions: range, multilayer, 3d, scc, 4 bits;
+* No support for PPS extensions: range, multilayer, 3d, scc, 4 bits.
 
-commit c994f9e70fa25811bd1872e44108aeaefab9c409
-Author: Sakari Ailus <sakari.ailus@linux.intel.com>
-Date:   Thu Oct 18 15:02:22 2018 -0300
+Signed-off-by: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
 
-    v4l2-mem2mem: Simplify exiting the function in __v4l2_m2m_try_schedule
+media: cedrus: Add HEVC/H.265 decoding support
 
-    The __v4l2_m2m_try_schedule function acquires and releases multiple
-    spinlocks. Simplify unlocking the job lock by adding labels to unlock
-    the lock and exit the function.
+This introduces support for HEVC/H.265 to the Cedrus VPU driver, with
+both uni-directional and bi-directional prediction modes supported.
 
-    Signed-off-by: Sakari Ailus <sakari.ailus@linux.intel.com>
-    Signed-off-by: Ezequiel Garcia <ezequiel@collabora.com>
+Field-coded (interlaced) pictures, custom quantization matrices and
+10-bit output are not supported at this point.
 
-commit 42784476328f8354b658751b32308228c0917cdc
-Author: Ezequiel Garcia <ezequiel@collabora.com>
-Date:   Thu Oct 18 15:02:21 2018 -0300
-
-    v4l2-ioctl.c: Simplify locking for m2m devices
-
-    Now that the mutexes for output and capture vb2 queues match,
-    it is possible to refer to the context q_lock as the
-    m2m lock for a given m2m context.
-
-    Remove the output/capture lock selection.
-
-    Signed-off-by: Ezequiel Garcia <ezequiel@collabora.com>
-
-commit d8ef73adaa637427b99f43f4e211cd29375fff63
-Author: Ezequiel Garcia <ezequiel@collabora.com>
-Date:   Thu Oct 18 15:02:20 2018 -0300
-
-    mem2mem: Require capture and output mutexes to match
-
-    Currently, all the mem2mem driver either use a single mutex
-    to lock the capture and output videobuf2 queues, or don't
-    set any mutex.
-
-    This means the mutexes match, and so the mem2mem framework
-    is able to set the m2m context lock.
-
-    Enforce this by making it mandatory for drivers to set
-    the same capture and output mutex, or not set any mutex at all.
-
-    Signed-off-by: Ezequiel Garcia <ezequiel@collabora.com>
-
-commit 32392f510bc855f49e3390a7b93cefac889ad206
-Author: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
-Date:   Fri Nov 2 06:36:32 2018 -0400
-
-    v4l2-controls: add a missing include
-
-    As warned by "make headers_check", the definition for the linux-specific
-    integer types is missing:
-
-    	./usr/include/linux/v4l2-controls.h:1105: found __[us]{8,16,32,64} type without #include <linux/types.h>
-
-    Fixes: c27bb30e7b6d ("media: v4l: Add definitions for MPEG-2 slice format and metadata")
-    Reported-by: Linus Torvalds <torvalds@linux-foundation.org>
-    Reported-by: Stephen Rothwell <sfr@canb.auug.org.au>
-    Signed-off-by: Mauro Carvalho Chehab <mchehab+samsung@kernel.org>
+Signed-off-by: Paul Kocialkowski <paul.kocialkowski@bootlin.com>
 ---
  .../media/uapi/v4l/extended-controls.rst      | 416 ++++++++++++++
  .../media/uapi/v4l/pixfmt-compressed.rst      |  15 +
@@ -259,10 +201,10 @@ Date:   Fri Nov 2 06:36:32 2018 -0400
  create mode 100644 drivers/staging/media/sunxi/cedrus/cedrus_h265.c
 
 diff --git a/Documentation/media/uapi/v4l/extended-controls.rst b/Documentation/media/uapi/v4l/extended-controls.rst
-index 65a1d873196b..a14aa85dfe00 100644
+index 027358b91082..131d501397c6 100644
 --- a/Documentation/media/uapi/v4l/extended-controls.rst
 +++ b/Documentation/media/uapi/v4l/extended-controls.rst
-@@ -1674,6 +1674,422 @@ enum v4l2_mpeg_video_h264_hierarchical_coding_type -
+@@ -1684,6 +1684,422 @@ enum v4l2_mpeg_video_h264_hierarchical_coding_type -
  	non-intra-coded frames, in zigzag scanning order. Only relevant for
  	non-4:2:0 YUV formats.
  
@@ -755,7 +697,7 @@ index 1ec425a7c364..7290666dab2f 100644
  # V4L2 capability defines
  replace define V4L2_CAP_VIDEO_CAPTURE device-capabilities
 diff --git a/drivers/media/v4l2-core/v4l2-ctrls.c b/drivers/media/v4l2-core/v4l2-ctrls.c
-index 5f2b033a7a42..72310bd0766a 100644
+index 10b8d94edbef..2a74fe05f124 100644
 --- a/drivers/media/v4l2-core/v4l2-ctrls.c
 +++ b/drivers/media/v4l2-core/v4l2-ctrls.c
 @@ -825,6 +825,11 @@ const char *v4l2_ctrl_get_name(u32 id)
@@ -2413,7 +2355,7 @@ index 000000000000..df422e1bbaae
 +	.trigger	= cedrus_h265_trigger,
 +};
 diff --git a/drivers/staging/media/sunxi/cedrus/cedrus_hw.c b/drivers/staging/media/sunxi/cedrus/cedrus_hw.c
-index 32adbcbe6175..39ab2109186d 100644
+index 07520a2ce179..e74915822acc 100644
 --- a/drivers/staging/media/sunxi/cedrus/cedrus_hw.c
 +++ b/drivers/staging/media/sunxi/cedrus/cedrus_hw.c
 @@ -46,6 +46,14 @@ int cedrus_engine_enable(struct cedrus_dev *dev, enum cedrus_codec codec)
@@ -2895,10 +2837,10 @@ index 5c5fce678b93..37aa5338d60b 100644
  		return -EINVAL;
  	}
 diff --git a/include/media/v4l2-ctrls.h b/include/media/v4l2-ctrls.h
-index 83ce0593b275..11664c5c3706 100644
+index d63cf227b0ab..6f70c87b2b1b 100644
 --- a/include/media/v4l2-ctrls.h
 +++ b/include/media/v4l2-ctrls.h
-@@ -43,6 +43,14 @@ struct poll_table_struct;
+@@ -49,6 +49,14 @@ struct poll_table_struct;
   * @p_char:			Pointer to a string.
   * @p_mpeg2_slice_params:	Pointer to a MPEG2 slice parameters structure.
   * @p_mpeg2_quantization:	Pointer to a MPEG2 quantization data structure.
@@ -2913,7 +2855,7 @@ index 83ce0593b275..11664c5c3706 100644
   * @p:				Pointer to a compound value.
   */
  union v4l2_ctrl_ptr {
-@@ -54,6 +62,14 @@ union v4l2_ctrl_ptr {
+@@ -60,6 +68,14 @@ union v4l2_ctrl_ptr {
  	char *p_char;
  	struct v4l2_ctrl_mpeg2_slice_params *p_mpeg2_slice_params;
  	struct v4l2_ctrl_mpeg2_quantization *p_mpeg2_quantization;
@@ -2929,7 +2871,7 @@ index 83ce0593b275..11664c5c3706 100644
  };
  
 diff --git a/include/uapi/linux/v4l2-controls.h b/include/uapi/linux/v4l2-controls.h
-index 998983a6e6b7..73ad2dd7d486 100644
+index 3dcfc6148f99..2e36f2d142c8 100644
 --- a/include/uapi/linux/v4l2-controls.h
 +++ b/include/uapi/linux/v4l2-controls.h
 @@ -47,6 +47,8 @@
@@ -2941,7 +2883,7 @@ index 998983a6e6b7..73ad2dd7d486 100644
  #ifndef __LINUX_V4L2_CONTROLS_H
  #define __LINUX_V4L2_CONTROLS_H
  
-@@ -536,6 +538,12 @@ enum v4l2_mpeg_video_h264_hierarchical_coding_type {
+@@ -533,6 +535,12 @@ enum v4l2_mpeg_video_h264_hierarchical_coding_type {
  };
  #define V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_LAYER	(V4L2_CID_MPEG_BASE+381)
  #define V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_LAYER_QP	(V4L2_CID_MPEG_BASE+382)
@@ -2954,7 +2896,7 @@ index 998983a6e6b7..73ad2dd7d486 100644
  #define V4L2_CID_MPEG_VIDEO_MPEG4_I_FRAME_QP	(V4L2_CID_MPEG_BASE+400)
  #define V4L2_CID_MPEG_VIDEO_MPEG4_P_FRAME_QP	(V4L2_CID_MPEG_BASE+401)
  #define V4L2_CID_MPEG_VIDEO_MPEG4_B_FRAME_QP	(V4L2_CID_MPEG_BASE+402)
-@@ -701,6 +709,9 @@ enum v4l2_cid_mpeg_video_hevc_size_of_length_field {
+@@ -698,6 +706,9 @@ enum v4l2_cid_mpeg_video_hevc_size_of_length_field {
  #define V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L6_BR	(V4L2_CID_MPEG_BASE + 642)
  #define V4L2_CID_MPEG_VIDEO_REF_NUMBER_FOR_PFRAMES	(V4L2_CID_MPEG_BASE + 643)
  #define V4L2_CID_MPEG_VIDEO_PREPEND_SPSPPS_TO_IDR	(V4L2_CID_MPEG_BASE + 644)
@@ -2964,9 +2906,9 @@ index 998983a6e6b7..73ad2dd7d486 100644
  
  /*  MPEG-class control IDs specific to the CX2341x driver as defined by V4L2 */
  #define V4L2_CID_MPEG_CX2341X_BASE				(V4L2_CTRL_CLASS_MPEG | 0x1000)
-@@ -1162,4 +1173,314 @@ struct v4l2_ctrl_mpeg2_quantization {
- 	__u8	chroma_non_intra_quantiser_matrix[64];
- };
+@@ -1094,4 +1105,314 @@ enum v4l2_detect_md_mode {
+ #define V4L2_CID_DETECT_MD_THRESHOLD_GRID	(V4L2_CID_DETECT_CLASS_BASE + 3)
+ #define V4L2_CID_DETECT_MD_REGION_GRID		(V4L2_CID_DETECT_CLASS_BASE + 4)
  
 +/* Compounds controls */
 +
@@ -3280,7 +3222,7 @@ index 998983a6e6b7..73ad2dd7d486 100644
 +
  #endif
 diff --git a/include/uapi/linux/videodev2.h b/include/uapi/linux/videodev2.h
-index c8e8ff810190..db6fe8fc6132 100644
+index 2ba2ad0e23fb..406940abab2c 100644
 --- a/include/uapi/linux/videodev2.h
 +++ b/include/uapi/linux/videodev2.h
 @@ -643,6 +643,7 @@ struct v4l2_pix_format {
@@ -3299,10 +3241,10 @@ index c8e8ff810190..db6fe8fc6132 100644
  #define V4L2_PIX_FMT_FWHT     v4l2_fourcc('F', 'W', 'H', 'T') /* Fast Walsh Hadamard Transform (vicodec) */
  
  /*  Vendor-specific formats   */
-@@ -1624,6 +1626,14 @@ struct v4l2_ext_control {
+@@ -1622,6 +1624,14 @@ struct v4l2_ext_control {
+ 		__u8 __user *p_u8;
+ 		__u16 __user *p_u16;
  		__u32 __user *p_u32;
- 		struct v4l2_ctrl_mpeg2_slice_params __user *p_mpeg2_slice_params;
- 		struct v4l2_ctrl_mpeg2_quantization __user *p_mpeg2_quantization;
 +		struct v4l2_ctrl_h264_sps __user *p_h264_sps;
 +		struct v4l2_ctrl_h264_pps __user *p_h264_pps;
 +		struct v4l2_ctrl_h264_scaling_matrix __user *p_h264_scal_mtrx;
@@ -3314,10 +3256,10 @@ index c8e8ff810190..db6fe8fc6132 100644
  		void __user *ptr;
  	};
  } __attribute__ ((packed));
-@@ -1671,6 +1681,14 @@ enum v4l2_ctrl_type {
+@@ -1667,6 +1677,14 @@ enum v4l2_ctrl_type {
+ 	V4L2_CTRL_TYPE_U8	     = 0x0100,
+ 	V4L2_CTRL_TYPE_U16	     = 0x0101,
  	V4L2_CTRL_TYPE_U32	     = 0x0102,
- 	V4L2_CTRL_TYPE_MPEG2_SLICE_PARAMS = 0x0103,
- 	V4L2_CTRL_TYPE_MPEG2_QUANTIZATION = 0x0104,
 +	V4L2_CTRL_TYPE_H264_SPS      = 0x0105,
 +	V4L2_CTRL_TYPE_H264_PPS      = 0x0106,
 +	V4L2_CTRL_TYPE_H264_SCALING_MATRIX = 0x0107,
