@@ -21,10 +21,22 @@ S = "${WORKDIR}/linux-${PV}"
 	
 SRC_URI[md5sum] = "d39dd4ba2d5861c54b90d49be19eaf31"
 
+SRCREV_xenomai = "74464ee37d0f3a7268490f399af012cff67c3e27"
+
 SRC_URI = "https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-${PV}.tar.xz \
-	file://0003-ARM-dts-nanopi-neo-air-Add-WiFi-eMMC.patch \
-	file://0001-Squashed-sunxi-VPU-driver-from-bootlin-github-reposi.patch \
+	file://0003-ARM-dts-nanopi-neo-air-Add-WiFi-eMMC.patch;patchdir=${S} \
+	file://0001-Squashed-sunxi-VPU-driver-from-bootlin-github-reposi.patch;patchdir=${S} \
+	file://0001-i-pipe-arm.patch;patchdir=${S} \
 	file://defconfig \
+	git://gitlab.denx.de/Xenomai/xenomai.git;destsuffix=xenomai/;name=xenomai \
+	file://0001-Fix-build-with-v4.20.patch_ \
         "
+
+do_install_xenomai(){
+	cd ${WORKDIR}/xenomai/
+	git am ../0001-Fix-build-with-v4.20.patch_
+	./scripts/prepare-kernel.sh --linux=${S} --arch=arm --ipipe=""
+}
+addtask do_install_xenomai after do_patch before do_kernel_configme
 
 #KBUILD_DEFCONFIG_orange-pi-one = "sunxi_defconfig"
