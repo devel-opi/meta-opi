@@ -16,6 +16,7 @@ SRCREV = "85a0f72f72d22d83e300efecd028482bea14ceee"
 
 SRC_URI = "git://github.com/bootlin/libva-v4l2-request.git;branch=master \
 	file://0001-Replace-bootlin-libdrm-sun4i-dependency-with-intel-l.patch \
+	file://0001-Add-missing-defines-to-fix-build-with-v4.20.patch \
 	file://libva-v4l2-request-env.sh \
 	"
 
