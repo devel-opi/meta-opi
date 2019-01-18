@@ -44,9 +44,8 @@ python __anonymous () {
 
 inherit kernel-arch pkgconfig multilib_header
 
-KORG_ARCHIVE_COMPRESSION ?= "gz"
-
-SRC_URI = "https://git.kernel.org/torvalds/t/linux-${PV}.tar.${KORG_ARCHIVE_COMPRESSION} \
+KORG_ARCHIVE_COMPRESSION ?= "xz"
+SRC_URI = "https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-${PV}.tar.${KORG_ARCHIVE_COMPRESSION} \
 		file://0001-Squashed-sunxi-VPU-driver-from-bootlin-github-reposi.patch	\
 		"
 UPSTREAM_CHECK_URI = "https://www.kernel.org/"

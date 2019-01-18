@@ -9,4 +9,5 @@ SRC_URI_append_libc-musl = "\
     file://0001-include-linux-stddef.h-in-swab.h-uapi-header.patch \
    "
 
-SRC_URI[md5sum] = "2ea08d2983ce6dee980ecebc5baf2c0d"
+SRC_URI[md5sum] = "d39dd4ba2d5861c54b90d49be19eaf31"
+
