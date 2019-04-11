@@ -1,19 +1,21 @@
 SUMMARY = "Mali-400 driver"
 LICENSE = "GPLv2"
-LIC_FILES_CHKSUM = "file://${S}/linux/license/gpl/mali_kernel_license.h;endline=9;md5=70163d3e370c9ce11ea3e6ace1e19481"
+LIC_FILES_CHKSUM = "file://${S}/linux/license/gpl/mali_kernel_license.h;endline=9;md5=2f2b0dc0c9b1b6b6dcc45fde0fe5f99a"
 
 inherit module
 
-PV = "r6p2+git${SRCPV}"
+DVER = "r8p1"
 
-SRCREV = "46e10b12945cb9b06d336a0210590168db42bbdf"
+PV = "${DVER}+git${SRCPV}"
+
+SRCREV = "8c83a9e71802d369f33cfa13c0a10ad02e889e35"
 
 SRC_URI = "git://github.com/mripard/sunxi-mali.git;protocol=git"
 
-S = "${WORKDIR}/git/r6p2/src/devicedrv/mali"
+S = "${WORKDIR}/git/${DVER}/src/devicedrv/mali"
 
 do_patch() {
-  cd ${WORKDIR}/git/r6p2/
+  cd ${WORKDIR}/git/${DVER}/
 
   quilt push -a
 }
