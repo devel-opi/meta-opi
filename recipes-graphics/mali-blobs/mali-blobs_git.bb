@@ -44,6 +44,7 @@ do_install() {
   install -m 0644 ${S}/include/wayland/GLES2/* ${D}${includedir}/GLES2/
   install -m 0644 ${S}/include/wayland/KHR/* ${D}${includedir}/KHR/
   install -m 0644 ${S}/include/wayland/gbm.h ${D}${includedir}/
+  rm -f ${D}${includedir}/KHR/khrplatform.h
 }
 
 FILES_${PN} = "${libdir}/*"
