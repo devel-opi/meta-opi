@@ -12,7 +12,7 @@ PV = "git${SRCPV}"
 
 SRC_URI = "git://gitlab.denx.de/Xenomai/xenomai.git;protocol=git"
 
-SRCREV = "c20ed9f14ff3de871b4459f54ef84f0378729905"
+SRCREV = "68c8760fa732cef218bbda2430f8ae507ff7d58f"
 
 S = "${WORKDIR}/git"
 
