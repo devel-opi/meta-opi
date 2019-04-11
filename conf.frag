@@ -2,7 +2,7 @@ MACHINE = "orange-pi-one"
 DISTRO = ""
 IMAGE_INSTALL_append = " mali mc glmark2 openssh v4l-utils libva-utils weston-xwayland"
 DISTRO_FEATURES_append = " x11 wayland fbdev opengl mali-blobs drm systemd"
-CORE_IMAGE_EXTRA_INSTALL += "wayland weston weston-conf weston-init strace tzdata dhcp-client v4l-utils eglinfo-fb eglinfo-x11"
+CORE_IMAGE_EXTRA_INSTALL += "wayland weston weston-conf weston-init strace tzdata dhcp-client v4l-utils"
 
 PACKAGECONFIG_append_pn-wayland = "xwayland"
 
