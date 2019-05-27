@@ -19,9 +19,9 @@ KERNEL_EXTRA_ARGS += "LOADADDR=${UBOOT_ENTRYPOINT}"
 
 S = "${WORKDIR}/linux-${PV}"
 	
-SRC_URI[md5sum] = "d39dd4ba2d5861c54b90d49be19eaf31"
+SRC_URI[md5sum] = "bf80c4ab5f475a2c0846340fb9eb6449"
 
-SRC_URI = "https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-${PV}.tar.xz \
+SRC_URI = "https://git.kernel.org/torvalds/t/linux-${PV}.tar.gz \
 	file://defconfig \
         "
 
