@@ -34,7 +34,7 @@ PREFERRED_PROVIDER_virtual/gbm = "mali-blobs"
 PREFERRED_PROVIDER_virtual/libgbm = "mali-blobs"
 
 PREFERRED_PROVIDER_virtual/kernel = "linux-mainline"
-PREFERRED_VERSION_linux-mainline = "4.20%"
+PREFERRED_VERSION_linux-mainline = "5.2%"
 PREFERRED_VERSION_linux-libc-headers = "5.1%"
 
 XSERVER += "mali-blobs"
