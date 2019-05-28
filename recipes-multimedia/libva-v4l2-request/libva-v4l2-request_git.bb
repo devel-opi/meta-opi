@@ -12,11 +12,9 @@ PV = "git${SRCPV}"
 
 DEPENDS = "libva libdrm"
 
-SRCREV = "85a0f72f72d22d83e300efecd028482bea14ceee"
+SRCREV = "7f359be748a755b1250f42d3ff6f5729c01bc85a"
 
 SRC_URI = "git://github.com/bootlin/libva-v4l2-request.git;branch=master \
-	file://0001-Replace-bootlin-libdrm-sun4i-dependency-with-intel-l.patch \
-	file://0001-Add-missing-defines-to-fix-build-with-v4.20.patch \
 	file://libva-v4l2-request-env.sh \
 	"
 
@@ -26,6 +24,8 @@ do_install_append() {
 	install -d ${D}${sysconfdir}/profile.d
 	install -m 0755 ${WORKDIR}/libva-v4l2-request-env.sh ${D}${sysconfdir}/profile.d
 }
+
+CFLAGS += " -I${S}/include"
 
 FILES_${PN} = "${libdir}/* ${sysconfdir}/*"
 FILES_${PN}-dev = "${includedir}/*"
