@@ -1,6 +1,9 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/u-boot:"
 
-SRC_URI += "file://boot.cmd"
+SRC_URI += " \
+    file://boot.cmd \
+    file://nousb.cfg \
+    "
 
 UBOOT_ENV_SUFFIX := "scr"
 UBOOT_ENV := "boot"
