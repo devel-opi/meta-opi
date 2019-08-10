@@ -4,8 +4,6 @@ IMAGE_INSTALL_append = " mc glmark2 openssh v4l-utils libva-utils weston-xwaylan
 DISTRO_FEATURES_append = " x11 wayland fbdev opengl drm systemd"
 CORE_IMAGE_EXTRA_INSTALL += "wayland weston weston-conf weston-init strace tzdata dhcp-client v4l-utils"
 
-PACKAGECONFIG_append_pn-wayland = "xwayland"
-
 PACKAGECONFIG_remove_pn-xserver-xorg = "glamor"
 
 PACKAGECONFIG_append_pn-mesa = "lima kmsro opengl dri gbm"
