@@ -20,22 +20,18 @@ UBOOT_LOADADDRESS ?= "0x400080OB00"
 SERIAL_CONSOLE ?= "115200 ttyS0"
 MACHINE_FEATURES ?= "alsa apm keyboard rtc serial screen usbgadget usbhost vfat"
 
-PREFERRED_PROVIDER_virtual/mesa = "mesa-gl"
-PREFERRED_PROVIDER_virtual/libgl = "mesa-gl"
-PREFERRED_PROVIDER_virtual/libgles1 = "mali-blobs"
-PREFERRED_PROVIDER_virtual/libgles2 = "mali-blobs"
-PREFERRED_PROVIDER_virtual/libegl = "mali-blobs"
-PREFERRED_PROVIDER_virtual/egl = "mali-blobs"
-PREFERRED_PROVIDER_virtual/gbm = "mali-blobs"
-PREFERRED_PROVIDER_virtual/libgbm = "mali-blobs"
+PREFERRED_PROVIDER_virtual/mesa = "mesa"
+PREFERRED_PROVIDER_virtual/libgl = "mesa"
+PREFERRED_PROVIDER_virtual/libgles1 = "mesa"
+PREFERRED_PROVIDER_virtual/libgles2 = "mesa"
+PREFERRED_PROVIDER_virtual/libegl = "mesa"
+PREFERRED_PROVIDER_virtual/egl = "mesa"
+PREFERRED_PROVIDER_virtual/gbm = "mesa"
+PREFERRED_PROVIDER_virtual/libgbm = "mesa"
 
 PREFERRED_PROVIDER_virtual/kernel = "linux-mainline"
 PREFERRED_VERSION_linux-libc-headers = "5.1%"
 
-XSERVER += "mali-blobs"
-
-MACHINE_ESSENTIAL_EddXTRA_RRECOMMENDS += " \
-  mali \
-"
+XSERVER += "mesa"
 
 SOC_FAMILY = "sun8i"
