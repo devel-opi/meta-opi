@@ -15,14 +15,14 @@ RDEPENDS_${KERNEL_PACKAGE_NAME}-base += "kernel-devicetree"
 
 KERNEL_EXTRA_ARGS += "LOADADDR=${UBOOT_ENTRYPOINT}"
 
-S = "${WORKDIR}/linux-${PV}"
-
-SRC_URI[md5sum] = "f03639ef55fca297d1f11891370fe0c1"
+S = "${WORKDIR}/git"
 
 SRC_URI = " \
-    https://git.kernel.org/torvalds/t/linux-${PV}.tar.gz \
+    git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git;branch=master \
     file://sunxi-append.cfg \
     "
+
+SRCREV = "e21a712a9685488f5ce80495b37b9fdbe96c230d"
 
 do_configure_prepend() {
     bbnote "Copying defconfig"

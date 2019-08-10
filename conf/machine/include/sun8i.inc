@@ -6,10 +6,6 @@ include conf/machine/include/soc-family.inc
 # Sub-architecture support
 MACHINE_SOCARCH_SUFFIX ?= ""
 
-PREFERRED_PROVIDER_virtual/kernel = "linux-opi"
-# PREFERRED_PROVIDER_u-boot = "u-boot-opi"
-# PREFERRED_PROVIDER_virtual/bootloader = "u-boot-opi"
-
 KERNEL_IMAGETYPE ?= "uImage"
 
 IMAGE_FSTYPES += "ext4 tar.gz"
@@ -34,7 +30,6 @@ PREFERRED_PROVIDER_virtual/gbm = "mali-blobs"
 PREFERRED_PROVIDER_virtual/libgbm = "mali-blobs"
 
 PREFERRED_PROVIDER_virtual/kernel = "linux-mainline"
-PREFERRED_VERSION_linux-mainline = "5.2%"
 PREFERRED_VERSION_linux-libc-headers = "5.1%"
 
 XSERVER += "mali-blobs"
