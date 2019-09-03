@@ -30,7 +30,6 @@ PREFERRED_PROVIDER_virtual/gbm = "mesa"
 PREFERRED_PROVIDER_virtual/libgbm = "mesa"
 
 PREFERRED_PROVIDER_virtual/kernel = "linux-mainline"
-PREFERRED_VERSION_linux-libc-headers = "5.1%"
 
 XSERVER += "mesa"
 

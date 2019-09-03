@@ -20,13 +20,15 @@ S = "${WORKDIR}/git"
 SRC_URI = " \
     git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git;branch=master \
     file://sunxi-append.cfg \
+    file://armbian-orange.cfg \
     "
 
 SRCREV = "e21a712a9685488f5ce80495b37b9fdbe96c230d"
 
 do_configure_prepend() {
     bbnote "Copying defconfig"
-    cp ${S}/arch/${ARCH}/configs/sunxi_defconfig ${WORKDIR}/defconfig
+#    cp ${S}/arch/${ARCH}/configs/sunxi_defconfig ${WORKDIR}/defconfig
+    cp  ${WORKDIR}/armbian-orange.cfg ${WORKDIR}/defconfig
 }
 
 do_configure_append () {

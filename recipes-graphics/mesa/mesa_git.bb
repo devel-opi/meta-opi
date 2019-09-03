@@ -1,9 +1,9 @@
 require ${BPN}.inc
 
-SRC_URI = "git://gitlab.freedesktop.org/mesa/mesa.git \
+SRC_URI = "git://gitlab.freedesktop.org/roman.stratiienko/mesa.git;branch=staging/android-q \
            file://0001-meson.build-check-for-all-linux-host_os-combinations.patch"
 
-SRCREV = "0325860e90f928b7022edfe2d0355cbf0c496463"
+SRCREV = "0249d0611d79250804a493597e29848deefd9eea"
 
 S = "${WORKDIR}/git"
 
