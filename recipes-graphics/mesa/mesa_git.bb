@@ -3,7 +3,7 @@ require ${BPN}.inc
 SRC_URI = "git://gitlab.freedesktop.org/roman.stratiienko/mesa.git;branch=staging/android-q \
            file://0001-meson.build-check-for-all-linux-host_os-combinations.patch"
 
-SRCREV = "0249d0611d79250804a493597e29848deefd9eea"
+SRCREV = "3a7e92dac538e1ad76b42590beeaada28e79bb07"
 
 S = "${WORKDIR}/git"
 
